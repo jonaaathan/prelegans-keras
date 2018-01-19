@@ -18,6 +18,7 @@ class Handle(object):
                  infile=None,
                  n_conv_layers=None,
                  n_fc_layers=None,
+                 past=None,
                  **kwargs):
         self.epochs = epochs
         self.filters = filters
@@ -29,33 +30,36 @@ class Handle(object):
 
         self.n_convs = n_conv_layers
         self.n_fc = n_fc_layers
+        self.past = past
 
         self.filename = str(self).split('/')[-1]
 
     def __str__(self):
-        return '{0}/{1}_{2}_{3}_{4}_{5}_{6}.{7}'.format(self.data_id,
+        return '{0}/{1}_{2}_{3}_{4}_{5}_{6}_{7}.{8}'.format(self.data_id,
                                                         self.filters,
                                                         self.filter_size,
                                                         self.epochs,
                                                         self.n_convs,
                                                         self.model,
                                                         self.n_fc,
+                                                        self.past,
                                                         self.ftype)
 
     def __repr__(self):
-        return '{0}/{1}_{2}_{3}_{4}_{5}_{6}.{7}'.format(self.data_id,
+        return '{0}/{1}_{2}_{3}_{4}_{5}_{6}_{7}.{8}'.format(self.data_id,
                                                         self.filters,
                                                         self.filter_size,
                                                         self.epochs,
                                                         self.n_convs,
                                                         self.model,
                                                         self.n_fc,
+                                                        self.past,
                                                         self.ftype)
 
 
     def __add__(self, other):
         return str(self) + other
-    
+
     def __radd__(self, other):
         return other + str(self)
     '''
