@@ -23,7 +23,7 @@ from keras import callbacks as cb
 from keras.utils import plot_model
 
 import nn as nets
-from tools import load_dataset, preprocess_dataset, Handle, retrieve_past
+from tools import load_dataset, preprocess_dataset, Handle, retrieve_past, plot_loss_history
 
 from absl import flags
 
@@ -121,9 +121,10 @@ def predict(x_data, y_data, handle):
     handle.model = lstm_net.name
     lstm_net.display_network_info()
 
-    # callbacks = cb.standard(patience=20, reduce_factor=.05) + [AucCallback]
     expId = random.getrandbits(16)
-    headers = {"size": str(size), "batch_size": str(batch_size), "do": str(do), "id": expId}
+    param_size = lstm_net.n_params
+
+    headers = {"size": str(param_size), "batch_size": str(batch_size), "id": expId, "epochs": FLAGS.epochs, "opt": FLAGS.optimizer}
     headers = dumps(headers)
     print (headers)
     remote = cb.RemoteMonitor(root='http://localhost:9000', headers={'hyper': headers})
@@ -144,6 +145,7 @@ def predict(x_data, y_data, handle):
     lstm_net.save(handle, data_dir=FLAGS.data_dir)
 
     # Extract the motifs from the convolutional layers
+    # plot_loss_history(history_path)
 
 ########## Hyper ##########
 path = '20170818_AM_N2_comp1_fullDataTable.tsv'
