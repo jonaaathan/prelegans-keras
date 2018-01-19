@@ -160,7 +160,7 @@ def main():
     else:
         handle = Handle(**FLAGS.flag_values_dict())
 
-    col_names = ['length', 'comSpeed1', 'bodyAxisSpeed1', 'pumpingRate', 'unnamed:_2', 'unnamed:_3', 'unnamed:_4', 'unnamed:_5', 'unnamed:_6', 'unnamed:_7', 'unnamed:_8', 'unnamed:_9', 'unnamed:_10', 'unnamed:_11', 'unnamed:_12', 'unnamed:_13', 'unnamed:_14', 'unnamed:_15']
+    col_names = ['length', 'comSpeed1', 'bodyAxisSpeed1', 'unnamed:_2', 'unnamed:_3', 'unnamed:_4', 'unnamed:_5', 'unnamed:_6', 'unnamed:_7', 'unnamed:_8', 'unnamed:_9', 'unnamed:_10', 'unnamed:_11', 'unnamed:_12', 'unnamed:_13', 'unnamed:_14', 'unnamed:_15']
     x_raw, y_raw = load_dataset(path, columns=True, columns_name=col_names, codes=True, code_key='DMPevent')
     x_data, y_data = preprocess_dataset(x_raw, y_raw)
     # x_data still a dataframe
@@ -180,55 +180,23 @@ def main():
     INPUT_SHAPE = x_data.shape
     print('input', INPUT_SHAPE)
     if FLAGS.mode == 'predict' or handle.model == 'predict':
+        # refractor into load_dataset
+        timestep = FLAGS.past
+        print (timestep)
         if True:
-            x_selected, y_selected = retrieve_past(x_data, y_data, 10, sample=True)
+            x_selected, y_selected = retrieve_past(x_data, y_data, timestep, sample=True)
             print (x_selected.shape, y_selected.shape)
-            np.save('lstm_output/data/'+ path.split('.')[-2], x_selected)
-            np.save('lstm_output/data/'+ path.split('.')[-2] + '_y', y_selected)
+            np.save('lstm_output/data/'+ path.split('.')[-2] + '_'+ str(timestep)       , x_selected)
+            np.save('lstm_output/data/'+ path.split('.')[-2] + '_'+ str(timestep) + '_y', y_selected)
         else:
             start_time = time.time()
-            x_selected = np.load('lstm_output/data/'+ path.split('.')[-2] + '.npy')
-            y_selected = np.load('lstm_output/data/'+ path.split('.')[-2] + '_y.npy')
+            x_selected = np.load('lstm_output/data/'+ path.split('.')[-2] + '_'+ str(timestep) + '.npy')
+            y_selected = np.load('lstm_output/data/'+ path.split('.')[-2] + '_'+ str(timestep) + '_y.npy')
             print('load data. Total time: {0:.3f}s'.format(time.time() - start_time))
 
         assert (x_selected.shape[0] == y_selected.shape[0]), 'x y samples are not matched'
 
         predict(x_selected, np.asarray(y_selected), handle)
-    # ----------------
-    '''
-    print('Building model')
-    model = Sequential()
-    model.add(LSTM(128, input_shape=INPUT_SHAPE[1:], dropout=do, recurrent_dropout=0.2))
-    model.add(Dense(1, activation='sigmoid'))
-
-    model.compile(loss='binary_crossentropy',
-                 optimizer='adam',
-                 metrics=['accuracy', precision, recall])
-
-    print('Train...')
-    # send information
-    expId = random.getrandbits(16)
-    headers = {"size": str(size), "batch_size": str(batch_size), "do": str(do), "id": expId}
-    headers = dumps(headers)
-    print (headers)
-    remote = callbacks.RemoteMonitor(root='http://localhost:9000', headers={'hyper': headers})
-    model.fit(x_train, y_train,
-             batch_size=batch_size,
-             epochs=3,
-             shuffle=True,
-             class_weight={0: 1., 1: 832.},
-             validation_split=0.2,
-             callbacks=[remote])
-    score, acc, prec, reca = model.evaluate(x_test, y_test, batch_size=batch_size)
-    print (model.metrics_names)
-
-    plot_model(model, to_file='n%d weight model.png' %(len(x_train)))
-
-    print('Test score:', score)
-    print('Test accuracy:', acc)
-    print('Test precision:', prec)
-    print('Test recall:', reca)
-    '''
 
 if __name__ == '__main__':
     main()
