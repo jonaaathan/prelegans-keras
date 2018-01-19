@@ -27,18 +27,16 @@ def build_lstm_model(input_shape=None, saved_model=None):
         # Input LayerRO
         inp = Input(shape=input_shape, name='Features') # timestep, data_dim
         # LSTM layers
-        '''
         long_dep = LSTM(7, activation='relu',
                          kernel_initializer='glorot_uniform',
                          name='LSTM1')(inp)
-         '''
-        flat = Flatten()(inp)
+        # flat = Flatten()(inp)
 
         # Fully-Connected encoding layers
         fc_enc = [Dense(FLAGS.filters[-1],
                         kernel_initializer='glorot_uniform',
                         activation='relu',
-                        name='FCEnc1')(flat)]
+                        name='FCEnc1')(long_dep)]
 
         for d in range(1, FLAGS.n_fc_layers):
             fc_enc.append(Dense(FLAGS.filters[-1],
