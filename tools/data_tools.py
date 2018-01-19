@@ -5,7 +5,7 @@ import time
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import RobustScaler, MinMaxScaler
 
-import io_tools as io
+from . import io_tools as io
 
 # refractors to callable modules [ PCA, padding ...]
 # make sample more positive dataset too.
@@ -13,7 +13,8 @@ def scaling(ndarray, method='minmax'):
     scaler = MinMaxScaler()
     # return scaler(quantile_range=(25, 75)).fit_transform(ndarray)
     scaled = scaler.fit_transform(ndarray)
-    print ('scaling', scaled)
+    # print ('scaling', scaled)
+    # print (scaler.data_min_, scaler.data_max_)
     # assert all(np.amin(scaled)) >= 0, 'scaled data is smaller than 0'
     # assert all(np.amax(scaled)) <= 1, 'scaled data is larger than 1'
     return scaled
@@ -33,7 +34,7 @@ def retrieve_past(x_data, y_data, time_forward, sample=False):
         pos = y_data[y_data == 1]
         neg = y_data[y_data == 0]
         # print ('type index', pos.index.values.shape, np.random.choice(neg.index.values, len(pos.index) * 4, replace=False).shape)
-        neg_sampled = np.random.choice(neg.index.values, len(pos.index) * 4, replace=False)
+        neg_sampled = np.random.choice(neg.index.values, len(pos.index) * 3, replace=False)
         index_set = np.concatenate([pos.index.values, neg_sampled])
         print ('\n', pos.value_counts(), pos.index[:20], '\n', neg_sampled[:20], 'index length', index_set.shape)
         index_set = np.sort(index_set)
@@ -61,7 +62,7 @@ def retrieve_past(x_data, y_data, time_forward, sample=False):
     return full_x, full_y
 
 def preprocess_dataset(x_data, y_data=None, padded=True, pad_y_data=False):
-    normalized_curve = x_data.iloc[:, 4:]
+    normalized_curve = x_data.iloc[:, 3:]
     # print ('nan', normalized_curve[normalized_curve.isnull().any(axis=1)])
     normalized_curve.dropna(inplace=True)
     keepIndex = normalized_curve.index.tolist()
@@ -84,16 +85,23 @@ def preprocess_dataset(x_data, y_data=None, padded=True, pad_y_data=False):
     projected_curves.index = keepIndex
 
     # replace NaN
+    x_dropna_non_curve = x_data.loc[keepIndex].iloc[:, :3]
+
+    # back forward fill for NaN in speed.
+    x_dropna_non_curve = x_dropna_non_curve.fillna(method='ffill')
+    x_dropna_non_curve = x_dropna_non_curve.fillna(method='bfill')
+    # assert x_dropna_non_curve.isnull().sum() == 0, 'x non_curve features should have no NaN values'
 
     # normalize non-curve
-    x_dropna_non_curve = x_data.loc[keepIndex].iloc[:, :4]
-    print ('x dropna index', x_dropna_non_curve[['length', 'comspeed1']].isnull())
-    scaled = scaling(x_dropna_non_curve[['length']]) # pass array of 1 label to get the 2-d ndarray requirement
-    print ('scaled length', scaled)
+    scaled = scaling(x_dropna_non_curve) # pass array of 1 label to get the 2-d ndarray requirement
 
     # combine x
-    assert x_dropna_non_curve.shape[0] == projected_curves.shape[0]
-    x = pd.concat([x_dropna_non_curve, projected_curves], axis=1)
+    norm_feature = pd.DataFrame(scaled)
+    norm_feature.index = keepIndex # match
+    # TODO: make sure no frameshift when resetting indexes.
+    assert norm_feature.shape[0] == projected_curves.shape[0]
+    x = pd.concat([norm_feature, projected_curves], axis=1)
+    print (norm_feature[:20])
     y = None
 
     if y_data is not None:
@@ -116,12 +124,15 @@ def load_dataset(infile, codes=None, code_key=None, columns=None, columns_name=N
     return x_data, y_data
 
 if __name__ == '__main__':
-    col_names = ['length', 'comSpeed1', 'bodyAxisSpeed1', 'pumpingRate', 'unnamed:_2', 'unnamed:_3', 'unnamed:_4', 'unnamed:_5', 'unnamed:_6', 'unnamed:_7', 'unnamed:_8', 'unnamed:_9', 'unnamed:_10', 'unnamed:_11', 'unnamed:_12', 'unnamed:_13', 'unnamed:_14', 'unnamed:_15']
+    pass
+    '''
+    col_names = ['length', 'comSpeed1', 'bodyAxisSpeed1', 'unnamed:_2', 'unnamed:_3', 'unnamed:_4', 'unnamed:_5', 'unnamed:_6', 'unnamed:_7', 'unnamed:_8', 'unnamed:_9', 'unnamed:_10', 'unnamed:_11', 'unnamed:_12', 'unnamed:_13', 'unnamed:_14', 'unnamed:_15']
     # 'DMP_event'
     filepath = '20170818_AM_N2_comp1_fullDataTable.tsv'
     # 431747
     x, y = load_dataset(filepath, columns=True, columns_name=col_names, codes=True, code_key='DMPevent')
     x, y = preprocess_dataset(x, y)
+    '''
     # retrieve_past(x, y, 10, sample=True)
     # selected = x.loc[1000:1010,:]
     # a = map(lambda x: x, normalized)
