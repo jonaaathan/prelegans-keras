@@ -1,2 +1,4 @@
 lstm_output/
 models/
+test_viz.py
+*.pyc
