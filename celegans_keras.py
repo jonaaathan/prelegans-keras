@@ -43,10 +43,9 @@ import time
 #
 ##########################
 flags.DEFINE_string("infile", '', 'The protein dataset file to be trained on.')
-flags.DEFINE_string("cohst_neg_file", '', 'The protein dataset file to use as a negative set on CoHST')
 
-flags.DEFINE_string("key", 'fam', 'The key to use for codes.')
-flags.DEFINE_enum("mode", 'predict', ['predict', 'generate', 'image_predict'], 'The mode to train CoMET.')
+flags.DEFINE_enum("mode", 'predict', ['predict', 'generate', 'image_predict'], 'The mode to train prelegans.')
+flags.DEFINE_integer("past", 10, 'The number of frames to consider before making the prediction. (mode=predict only)', lower_bound=1, upper_bound=10000)
 flags.DEFINE_integer("epochs", 50, 'The number of training epochs to perform.', lower_bound=1)
 flags.DEFINE_integer("batch_size", 50, 'The size of the mini-batch.', lower_bound=1)
 flags.DEFINE_float("validation_split", 0.2, "The fraction of data to use for cross-validation.", lower_bound=0.0,
